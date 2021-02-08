@@ -12,12 +12,12 @@ const port = process.env.PORT;
 
 app.get('/video', (req, res) => 
 {
-    const path = "SampleVideo_1280x720_1mb.mp4";
+    const path = "videos/SampleVideo_1280x720_1mb.mp4";
     fs.stat(path, (err, stats) => 
     {
         if (err)
         {
-            console.error("An error has occurred");
+            console.error(`An error has occurred: ${err}`);
             res.sendStatus(500);
 
             return;
