@@ -1,44 +1,33 @@
 const express = require('express');
-const fs = require('fs');
+const http = require('http');
 
 const app = express();
 
-if (!process.env.PORT)
-{
-    throw new Error("Please specify the port number for the HTTP server with the environment variable PORT.");
-}
-
 const port = process.env.PORT;
+const videoStorageHost = process.env.VIDEO_STORAGE_HOST;
+const videoStoragePort = parseInt(process.env.VIDEO_STORAGE_PORT);
 
 app.get('/video', (req, res) => 
 {
-    const path = "videos/SampleVideo_1280x720_1mb.mp4";
-    fs.stat(path, (err, stats) => 
-    {
-        if (err)
+    const forwardRequest = http.request(
         {
-            console.error(`An error has occurred: ${err}`);
-            res.sendStatus(500);
-
-            return;
+            host: videoStorageHost,
+            port: videoStoragePort,
+            path: '/video?path=SampleVideo_1280x720_1mb.mp4',
+            method: 'GET',
+            headers: req.headers
+        }, 
+        forwardResponse => 
+        {
+            res.writeHeader(forwardResponse.statusCode, forwardResponse.headers);
+            forwardResponse.pipe(res);
         }
+    );
 
-        res.writeHead(200, 
-        {
-            "Content-Length": stats.size,
-            "Contents-Type": "video/mp4"
-        });
-
-        fs.createReadStream(path).pipe(res);
-    });
-});
-
-app.get('/', (req, res) => 
-{
-    res.send('Hello World!');
+    req.pipe(forwardRequest);
 });
 
 app.listen(port, () => 
 {
-    console.log(`Example app listening on port ${port}!`);
+    console.log('Microservice online');
 });
